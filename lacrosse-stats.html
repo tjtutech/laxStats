@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Girls Lacrosse Stats</title>
+<style>
+  :root {
+    --primary: #6B21A8;
+    --primary-light: #9333EA;
+    --primary-dark: #581C87;
+    --accent: #F59E0B;
+    --bg: #F3F0FF;
+    --card: #FFFFFF;
+    --text: #1E1B2E;
+    --text-light: #6B7280;
+    --danger: #EF4444;
+    --success: #10B981;
+    --border: #E5E7EB;
+    --shadow: 0 2px 8px rgba(107,33,168,0.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(107,33,168,0.25);
+  }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-actions { display: flex; gap: 8px; }
+  .header-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .header-btn:hover { background: rgba(255,255,255,0.3); }
+  .header-btn.danger { background: rgba(239,68,68,0.4); }
+  .header-btn.danger:hover { background: rgba(239,68,68,0.6); }
+
+  /* ── Game Info Bar ── */
+  .game-bar {
+    background: var(--card);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .game-bar-info { display: flex; flex-direction: column; gap: 2px; }
+  .game-name { font-weight: 600; color: var(--primary); }
+  .game-opponent { font-size: 12px; color: var(--text-light); }
+  .game-bar-actions { display: flex; gap: 6px; }
+  .game-bar-actions button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .game-bar-actions .end-game-btn {
+    background: var(--danger);
+  }
+
+  /* ── Scoreboard ── */
+  .scoreboard {
+    display: none;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .scoreboard.visible { display: block; }
+  .scoreboard-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .score-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+  }
+  .score-team-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .score-value {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .score-divider {
+    font-size: 28px;
+    font-weight: 300;
+    opacity: 0.5;
+  }
+  .scoreboard-status {
+    font-size: 11px;
+    margin-top: 6px;
+    opacity: 0.7;
+    font-weight: 600;
+  }
+
+  /* ── Views ── */
+  .view { display: none; padding: 16px 20px 100px; }
+  .view.active { display: block; }
+
+  /* ── Jersey Grid ── */
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 12px;
+  }
+  .jersey-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .jersey-btn {
+    aspect-ratio: 1;
+    border: 2px solid var(--primary-light);
+    background: var(--card);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .jersey-btn:active { transform: scale(0.93); }
+  .jersey-btn .number {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .jersey-btn .count {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+  .jersey-btn.goalie {
+    border-color: var(--accent);
+  }
+  .jersey-btn.goalie .number { color: var(--accent); }
+  .jersey-btn .goalie-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--accent);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+
+  /* ── Add Player ── */
+  .add-player-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .add-player-row input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .add-player-row input:focus { border-color: var(--primary-light); }
+  .add-btn {
+    padding: 12px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .goalie-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .goalie-toggle.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #FFFBEB;
+  }
+
+  /* ── Modal / Overlay ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 24px 20px 32px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .modal-header h2 { font-size: 20px; font-weight: 700; }
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+  }
+
+  /* ── Stat Buttons ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-btn {
+    padding: 16px 12px;
+    border: 2px solid var(--border);
+    background: var(--card);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .stat-btn:active { transform: scale(0.95); }
+  .stat-btn:hover { border-color: var(--primary-light); background: #F5F3FF; }
+  .stat-btn.positive:hover { border-color: var(--success); background: #ECFDF5; }
+  .stat-btn.negative:hover { border-color: var(--danger); background: #FEF2F2; }
+  .stat-btn.highlight {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    border-color: transparent;
+  }
+  .stat-btn.highlight:hover { opacity: 0.9; background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+  .stat-btn.goalie-only {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .stat-btn .stat-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+  .stat-btn.highlight .stat-count { color: rgba(255,255,255,0.8); }
+  .stat-btn.goalie-only .stat-count { color: var(--accent); opacity: 0.7; }
+
+  /* ── Assist Prompt ── */
+  .assist-prompt {
+    margin-top: 16px;
+    padding: 16px;
+    background: #F5F3FF;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .assist-prompt p { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .assist-prompt .assist-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .assist-prompt .assist-actions button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .assist-yes { background: var(--primary); color: white; }
+  .assist-no { background: var(--border); color: var(--text); }
+  .assist-number-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .assist-number-btn {
+    padding: 12px 8px;
+    border: 2px solid var(--primary-light);
+    background: var(--card);
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .assist-number-btn:active { transform: scale(0.93); }
+
+  /* ── Game Log ── */
+  .log-list { list-style: none; }
+  .log-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--card);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+    font-size: 14px;
+  }
+  .log-item .log-info { flex: 1; }
+  .log-item .log-jersey {
+    font-weight: 800;
+    color: var(--primary);
+    margin-right: 12px;
+    font-size: 18px;
+    min-width: 36px;
+  }
+  .log-item .log-stat { font-weight: 600; }
+  .log-item .log-time { font-size: 12px; color: var(--text-light); }
+  .log-item .log-undo {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  /* ── Summary Table ── */
+  .summary-table-wrap { overflow-x: auto; margin-bottom: 20px; }
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 600px;
+  }
+  .summary-table th {
+    background: var(--primary);
+    color: white;
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: 700;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+  }
+  .summary-table th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+  .summary-table th:last-child { border-radius: 0 8px 0 0; }
+  .summary-table td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-table td:first-child { text-align: left; font-weight: 700; color: var(--primary); }
+  .summary-table tr:nth-child(even) { background: #F9F7FF; }
+  .summary-table tr:hover { background: #F0ECFF; }
+
+  /* ── Game List ── */
+  .game-list { list-style: none; }
+  .game-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--card);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .game-list-item:hover { box-shadow: 0 4px 16px rgba(107,33,168,0.15); }
+  .game-list-item .game-label { font-weight: 600; font-size: 15px; }
+  .game-list-item .game-date { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+  .game-list-item .game-score-line { font-size: 12px; color: var(--primary); font-weight: 600; margin-top: 2px; }
+  .game-list-item .game-stats-count { font-size: 13px; color: var(--text-light); }
+  .game-list-actions { display: flex; gap: 6px; }
+  .game-list-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .game-load-btn { background: var(--primary); color: white; }
+  .game-delete-btn { background: #FEE2E2; color: var(--danger); }
+
+  /* ── Tabs ── */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    display: flex;
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: color 0.2s;
+  }
+  .tab.active { color: var(--primary); }
+  .tab-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.5; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--text);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 300;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Confirm Dialog ── */
+  .confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+  }
+  .confirm-box h3 { margin-bottom: 8px; font-size: 18px; }
+  .confirm-box p { font-size: 14px; color: var(--text-light); margin-bottom: 20px; }
+  .confirm-actions { display: flex; gap: 10px; }
+  .confirm-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .confirm-cancel { background: var(--border); color: var(--text); }
+  .confirm-ok { background: var(--danger); color: white; }
+  .confirm-ok.primary { background: var(--primary); }
+
+  /* ── Manage Players ── */
+  .player-manage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--card);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    box-shadow: var(--shadow);
+  }
+  .player-manage-item .pm-number {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary);
+    min-width: 44px;
+  }
+  .player-manage-item .pm-goalie {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .player-manage-item .pm-actions { display: flex; gap: 6px; }
+  .player-manage-item .pm-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .pm-toggle-goalie { background: #FFFBEB; color: var(--accent); }
+  .pm-remove { background: #FEE2E2; color: var(--danger); }
+
+  /* ── New Game Modal ── */
+  .new-game-form { display: flex; flex-direction: column; gap: 12px; }
+  .new-game-form label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .new-game-form input {
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .new-game-form input:focus { border-color: var(--primary-light); }
+  .new-game-form .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .new-game-form .form-actions button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .form-cancel { background: var(--border); color: var(--text); }
+  .form-submit { background: var(--primary); color: white; }
+
+  /* ── End Game Summary ── */
+  .end-game-page {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 250;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .end-game-page.open { display: flex; }
+  .end-game-page-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .end-game-page-header h2 { font-size: 18px; font-weight: 700; }
+  .end-game-page-header button {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .end-game-page-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 32px;
+  }
+  .end-game-score-bar {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .end-game-score-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .efs-team { text-align: center; min-width: 70px; }
+  .efs-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
+  .efs-score { font-size: 40px; font-weight: 900; line-height: 1; }
+  .efs-divider { font-size: 28px; opacity: 0.4; }
+  .end-game-meta {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+  .end-game-opp-input {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .end-game-opp-input label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-light);
+    white-space: nowrap;
+  }
+  .end-game-opp-input input {
+    flex: 1;
+    max-width: 120px;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+  }
+  .end-game-opp-input input:focus { border-color: var(--primary-light); }
+  .end-game-stats-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 10px;
+  }
+  .end-game-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .end-game-actions button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .end-game-actions .form-cancel { background: var(--border); color: var(--text); }
+  .end-game-actions .form-submit { background: var(--primary); color: white; }
+
+  /* ── Totals tab toggle ── */
+  .totals-toggle {
+    display: flex;
+    background: var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 16px;
+  }
+  .totals-toggle button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-light);
+    transition: all 0.2s;
+  }
+  .totals-toggle button.active {
+    background: var(--card);
+    color: var(--primary);
+    box-shadow: var(--shadow);
+  }
+
+  @media (min-width: 600px) {
+    .jersey-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .modal { border-radius: 20px; margin: auto; max-height: 80vh; }
+    .overlay { align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Lacrosse Stats</h1>
+  <div class="header-actions">
+    <button class="header-btn" onclick="showView('games')">Games</button>
+  </div>
+</header>
+
+<!-- Game Bar -->
+<div class="game-bar" id="gameBar">
+  <div class="game-bar-info">
+    <span class="game-name" id="gameNameDisplay">No game loaded</span>
+    <span class="game-opponent" id="gameOpponentDisplay"></span>
+  </div>
+  <div class="game-bar-actions">
+    <button onclick="promptNewGame()">New Game</button>
+    <button class="end-game-btn" id="endGameBtn" style="display:none;" onclick="endGame()">End Game</button>
+  </div>
+</div>
+
+<!-- Scoreboard -->
+<div class="scoreboard" id="scoreboard">
+  <div class="scoreboard-inner">
+    <div class="score-team">
+      <div class="score-team-label" id="scoreHomeLabel">US</div>
+      <div class="score-value" id="scoreHome">0</div>
+    </div>
+    <div class="score-divider">&ndash;</div>
+    <div class="score-team">
+      <div class="score-team-label" id="scoreAwayLabel">OPP</div>
+      <div class="score-value" id="scoreAway">0</div>
+    </div>
+  </div>
+  <div class="scoreboard-status" id="scoreboardStatus">In Progress</div>
+</div>
+
+<!-- ═══ PLAYERS VIEW ═══ -->
+<div class="view active" id="viewPlayers">
+  <div class="section-label">Add Player</div>
+  <div class="add-player-row">
+    <input type="number" id="jerseyInput" placeholder="Jersey #" min="0" max="99" inputmode="numeric">
+    <button class="goalie-toggle" id="goalieToggle" onclick="toggleGoalieInput()">G</button>
+    <button class="add-btn" onclick="addPlayer()">Add</button>
+  </div>
+
+  <div class="section-label">Roster <span id="rosterCount"></span></div>
+  <div class="jersey-grid" id="jerseyGrid"></div>
+
+  <div class="empty-state" id="emptyRoster" style="display:none;">
+    <div class="empty-icon">🥍</div>
+    <p>Add jersey numbers to start tracking stats.<br>Numbers will sort by game usage.</p>
+  </div>
+</div>
+
+<!-- ═══ LOG VIEW ═══ -->
+<div class="view" id="viewLog">
+  <div class="section-label">Game Log</div>
+  <div id="logEmpty" class="empty-state" style="display:none;">
+    <div class="empty-icon">📋</div>
+    <p>No stats recorded yet.<br>Tap a jersey number to start.</p>
+  </div>
+  <ul class="log-list" id="logList"></ul>
+</div>
+
+<!-- ═══ SUMMARY VIEW ═══ -->
+<div class="view" id="viewSummary">
+  <div class="section-label">Game Summary</div>
+  <div id="summaryEmpty" class="empty-state" style="display:none;">
+    <div class="empty-icon">📊</div>
+    <p>Stats will appear here as you record them.</p>
+  </div>
+  <div class="summary-table-wrap" id="summaryTableWrap" style="display:none;">
+    <table class="summary-table" id="summaryTable"></table>
+  </div>
+</div>
+
+<!-- ═══ TOTALS VIEW ═══ -->
+<div class="view" id="viewTotals">
+  <div class="section-label">All-Time Player Stats</div>
+  <div class="totals-toggle" id="totalsToggle">
+    <button class="active" onclick="setTotalsMode('all')">All Games</button>
+    <button onclick="setTotalsMode('per-game')">Per Game</button>
+  </div>
+  <div id="totalsEmpty" class="empty-state" style="display:none;">
+    <div class="empty-icon">🏆</div>
+    <p>Play some games and stats will<br>accumulate here across all games.</p>
+  </div>
+  <div class="summary-table-wrap" id="totalsTableWrap" style="display:none;">
+    <table class="summary-table" id="totalsTable"></table>
+  </div>
+</div>
+
+<!-- ═══ GAMES VIEW ═══ -->
+<div class="view" id="viewGames">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div class="section-label" style="margin-bottom:0;">Saved Games</div>
+    <button class="add-btn" onclick="promptNewGame()" style="font-size:13px;padding:8px 16px;">+ New Game</button>
+  </div>
+  <div id="gamesEmpty" class="empty-state" style="display:none;">
+    <div class="empty-icon">🏟️</div>
+    <p>No saved games yet.<br>Create a new game to begin.</p>
+  </div>
+  <ul class="game-list" id="gamesList"></ul>
+</div>
+
+<!-- ═══ MANAGE VIEW ═══ -->
+<div class="view" id="viewManage">
+  <div class="section-label">Manage Roster</div>
+  <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">
+    Your roster is saved across all games. Toggle goalie status or remove players here.
+  </p>
+  <div id="manageList"></div>
+</div>
+
+<!-- ═══ STAT MODAL ═══ -->
+<div class="overlay" id="statOverlay" onclick="closeStatModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="statModalTitle">#00</h2>
+      <button class="modal-close" onclick="closeStatModalDirect()">&times;</button>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="assist-prompt" id="assistPrompt" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ═══ NEW GAME MODAL ═══ -->
+<div class="overlay" id="newGameOverlay" onclick="closeNewGameModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2>New Game</h2>
+      <button class="modal-close" onclick="closeNewGameModalDirect()">&times;</button>
+    </div>
+    <div class="new-game-form">
+      <label>Game Name</label>
+      <input type="text" id="newGameName" placeholder='e.g. "Playoffs Round 1"'>
+      <label>Opponent</label>
+      <input type="text" id="newGameOpponent" placeholder='e.g. "Eagles"'>
+      <div class="form-actions">
+        <button class="form-cancel" onclick="closeNewGameModalDirect()">Cancel</button>
+        <button class="form-submit" onclick="createNewGame()">Start Game</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ END GAME PAGE ═══ -->
+<div class="end-game-page" id="endGamePage">
+  <div class="end-game-page-header">
+    <h2>End Game</h2>
+    <button onclick="closeEndGamePage()">Back</button>
+  </div>
+  <div class="end-game-page-body">
+    <!-- Score bar -->
+    <div class="end-game-score-bar">
+      <div class="end-game-score-bar-inner">
+        <div class="efs-team">
+          <div class="efs-label">US</div>
+          <div class="efs-score" id="endGameOurScore">0</div>
+        </div>
+        <div class="efs-divider">&ndash;</div>
+        <div class="efs-team">
+          <div class="efs-label" id="endGameOppLabel">OPP</div>
+          <div class="efs-score" id="endGameOppPreview">0</div>
+        </div>
+      </div>
+      <div class="end-game-meta" id="endGameMeta"></div>
+    </div>
+
+    <!-- Opponent score input -->
+    <div class="end-game-opp-input">
+      <label>Opponent Final Score:</label>
+      <input type="number" id="endGameOppScore" placeholder="0" min="0" inputmode="numeric">
+    </div>
+
+    <!-- Full stat table -->
+    <div class="end-game-stats-label">Game Stats</div>
+    <div class="summary-table-wrap">
+      <table class="summary-table" id="endGameStatsTable"></table>
+    </div>
+
+    <!-- Actions -->
+    <div class="end-game-actions">
+      <button class="form-cancel" onclick="closeEndGamePage()">Keep Playing</button>
+      <button class="form-submit" onclick="confirmEndGame()">Save &amp; End Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONFIRM DIALOG ═══ -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-ok" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ TAB BAR ═══ -->
+<div class="tab-bar">
+  <button class="tab active" data-view="viewPlayers" onclick="showView('players')">
+    <span class="tab-icon">🥍</span>Players
+  </button>
+  <button class="tab" data-view="viewLog" onclick="showView('log')">
+    <span class="tab-icon">📋</span>Log
+  </button>
+  <button class="tab" data-view="viewSummary" onclick="showView('summary')">
+    <span class="tab-icon">📊</span>Game
+  </button>
+  <button class="tab" data-view="viewTotals" onclick="showView('totals')">
+    <span class="tab-icon">🏆</span>Totals
+  </button>
+  <button class="tab" data-view="viewManage" onclick="showView('manage')">
+    <span class="tab-icon">⚙️</span>Roster
+  </button>
+</div>
+
+<script>
+// ─── DATA LAYER ───
+const STATS_ORDER = [
+  'Goal', 'Assist', 'Shot', 'Draw Attempt', 'Draw Control',
+  'Ground Ball', 'Caused Turnover', 'Turnover Allowed',
+  'Goal Allowed', 'Goal Save'
+];
+const GOALIE_ONLY = ['Goal Allowed', 'Goal Save'];
+const POSITIVE_STATS = ['Goal', 'Assist', 'Shot', 'Draw Control', 'Ground Ball', 'Caused Turnover', 'Goal Save'];
+const NEGATIVE_STATS = ['Turnover Allowed', 'Goal Allowed'];
+
+const STAT_ABBR = {
+  'Goal': 'G', 'Assist': 'A', 'Shot': 'Sh', 'Draw Attempt': 'DA',
+  'Draw Control': 'DC', 'Ground Ball': 'GB', 'Caused Turnover': 'CT',
+  'Turnover Allowed': 'TO', 'Goal Allowed': 'GA', 'Goal Save': 'GS'
+};
+
+const LS_ROSTER = 'lax_roster';
+const LS_GAMES = 'lax_games';
+const LS_CURRENT = 'lax_current_game';
+
+function loadRoster() {
+  return JSON.parse(localStorage.getItem(LS_ROSTER) || '[]');
+}
+function saveRoster(r) {
+  localStorage.setItem(LS_ROSTER, JSON.stringify(r));
+}
+function loadGames() {
+  return JSON.parse(localStorage.getItem(LS_GAMES) || '{}');
+}
+function saveGames(g) {
+  localStorage.setItem(LS_GAMES, JSON.stringify(g));
+}
+function currentGameId() {
+  return localStorage.getItem(LS_CURRENT) || null;
+}
+function setCurrentGame(id) {
+  localStorage.setItem(LS_CURRENT, id);
+}
+function getGame(id) {
+  const g = loadGames();
+  return g[id] || null;
+}
+function saveGame(id, game) {
+  const g = loadGames();
+  g[id] = game;
+  saveGames(g);
+}
+
+// ─── STATE ───
+let activeJersey = null;
+let assistFlowActive = false;
+let totalsMode = 'all';
+
+// ─── INIT ───
+function init() {
+  const gid = currentGameId();
+  if (gid) {
+    const game = getGame(gid);
+    if (game) {
+      updateGameBar(game);
+    } else {
+      localStorage.removeItem(LS_CURRENT);
+    }
+  }
+  renderJerseyGrid();
+  renderLog();
+  renderSummary();
+  renderGamesList();
+  renderManage();
+  updateScoreboard();
+  updateEndGameBtn();
+}
+
+// ─── GAME BAR ───
+function updateGameBar(game) {
+  document.getElementById('gameNameDisplay').textContent = game.name;
+  const oppEl = document.getElementById('gameOpponentDisplay');
+  if (game.opponent) {
+    oppEl.textContent = 'vs. ' + game.opponent;
+  } else {
+    oppEl.textContent = '';
+  }
+  updateEndGameBtn();
+}
+
+function updateEndGameBtn() {
+  const gid = currentGameId();
+  const btn = document.getElementById('endGameBtn');
+  if (gid) {
+    const game = getGame(gid);
+    if (game && !game.ended) {
+      btn.style.display = '';
+    } else {
+      btn.style.display = 'none';
+    }
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// ─── SCOREBOARD ───
+function getScoreData() {
+  const gid = currentGameId();
+  if (!gid) return null;
+  const game = getGame(gid);
+  if (!game) return null;
+  const log = game.log || [];
+  const ourGoals = log.filter(e => e.stat === 'Goal').length;
+  const goalAllowed = log.filter(e => e.stat === 'Goal Allowed').length;
+  return {
+    us: ourGoals,
+    them: game.ended ? (game.oppScore || goalAllowed) : goalAllowed,
+    opponent: game.opponent || 'OPP',
+    ended: !!game.ended
+  };
+}
+
+function updateScoreboard() {
+  const sb = document.getElementById('scoreboard');
+  const gid = currentGameId();
+  if (!gid) { sb.classList.remove('visible'); return; }
+  const data = getScoreData();
+  if (!data) { sb.classList.remove('visible'); return; }
+  sb.classList.add('visible');
+  document.getElementById('scoreHome').textContent = data.us;
+  document.getElementById('scoreAway').textContent = data.them;
+  document.getElementById('scoreHomeLabel').textContent = 'US';
+  document.getElementById('scoreAwayLabel').textContent = data.opponent.toUpperCase().substring(0, 10);
+  document.getElementById('scoreboardStatus').textContent = data.ended ? 'Final' : 'In Progress';
+}
+
+// ─── VIEWS ───
+function showView(name) {
+  const map = {
+    players: 'viewPlayers', log: 'viewLog',
+    summary: 'viewSummary', games: 'viewGames',
+    manage: 'viewManage', totals: 'viewTotals'
+  };
+  const viewId = map[name] || name;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === viewId);
+  });
+  if (name === 'summary') renderSummary();
+  if (name === 'log') renderLog();
+  if (name === 'manage') renderManage();
+  if (name === 'games') renderGamesList();
+  if (name === 'totals') renderTotals();
+}
+
+// ─── PLAYERS ───
+function addPlayer() {
+  const input = document.getElementById('jerseyInput');
+  const num = input.value.trim();
+  if (num === '' || isNaN(num)) return;
+  const jersey = parseInt(num);
+  const roster = loadRoster();
+  if (roster.find(p => p.number === jersey)) {
+    toast('Player #' + jersey + ' already exists');
+    return;
+  }
+  const isGoalie = document.getElementById('goalieToggle').classList.contains('active');
+  roster.push({ number: jersey, goalie: isGoalie });
+  saveRoster(roster);
+  input.value = '';
+  document.getElementById('goalieToggle').classList.remove('active');
+  renderJerseyGrid();
+  renderManage();
+  toast('Added #' + jersey + (isGoalie ? ' (Goalie)' : ''));
+}
+
+function toggleGoalieInput() {
+  document.getElementById('goalieToggle').classList.toggle('active');
+}
+
+function getUsageCount(jersey) {
+  const gid = currentGameId();
+  if (!gid) return 0;
+  const game = getGame(gid);
+  if (!game) return 0;
+  return (game.log || []).filter(e => e.jersey === jersey).length;
+}
+
+function renderJerseyGrid() {
+  const roster = loadRoster();
+  const grid = document.getElementById('jerseyGrid');
+  const empty = document.getElementById('emptyRoster');
+  const countEl = document.getElementById('rosterCount');
+  countEl.textContent = '(' + roster.length + ')';
+
+  if (roster.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const sorted = [...roster].sort((a, b) => {
+    const ua = getUsageCount(a.number);
+    const ub = getUsageCount(b.number);
+    if (ub !== ua) return ub - ua;
+    return a.number - b.number;
+  });
+
+  grid.innerHTML = sorted.map(p => {
+    const count = getUsageCount(p.number);
+    return `<button class="jersey-btn${p.goalie ? ' goalie' : ''}" onclick="openStatModal(${p.number})">
+      ${p.goalie ? '<span class="goalie-badge">G</span>' : ''}
+      <span class="number">${p.number}</span>
+      <span class="count">${count ? count + ' stat' + (count > 1 ? 's' : '') : ''}</span>
+    </button>`;
+  }).join('');
+}
+
+// ─── STAT MODAL ───
+function openStatModal(jersey) {
+  const gid = currentGameId();
+  if (!gid) {
+    toast('Create a game first');
+    return;
+  }
+  const game = getGame(gid);
+  if (game && game.ended) {
+    toast('Game has ended — recall it from Games to view');
+    return;
+  }
+  activeJersey = jersey;
+  assistFlowActive = false;
+  const roster = loadRoster();
+  const player = roster.find(p => p.number === jersey);
+  const isGoalie = player ? player.goalie : false;
+
+  document.getElementById('statModalTitle').textContent = '#' + jersey + (isGoalie ? ' (Goalie)' : '');
+  document.getElementById('assistPrompt').style.display = 'none';
+
+  const log = game ? (game.log || []) : [];
+  const playerLog = log.filter(e => e.jersey === jersey);
+
+  const grid = document.getElementById('statGrid');
+  grid.innerHTML = STATS_ORDER.filter(s => {
+    if (GOALIE_ONLY.includes(s) && !isGoalie) return false;
+    return true;
+  }).map(stat => {
+    const count = playerLog.filter(e => e.stat === stat).length;
+    let cls = 'stat-btn';
+    if (stat === 'Goal') cls += ' highlight';
+    else if (POSITIVE_STATS.includes(stat)) cls += ' positive';
+    else if (NEGATIVE_STATS.includes(stat)) cls += ' negative';
+    if (GOALIE_ONLY.includes(stat)) cls += ' goalie-only';
+    return `<button class="${cls}" onclick="recordStat(${jersey}, '${stat}')">
+      ${stat}
+      <span class="stat-count">${count > 0 ? count : ''}</span>
+    </button>`;
+  }).join('');
+
+  document.getElementById('statOverlay').classList.add('open');
+}
+
+function closeStatModal(e) {
+  if (e && e.target !== document.getElementById('statOverlay')) return;
+  closeStatModalDirect();
+}
+function closeStatModalDirect() {
+  document.getElementById('statOverlay').classList.remove('open');
+  activeJersey = null;
+  assistFlowActive = false;
+}
+
+// ─── RECORD STAT ───
+function recordStat(jersey, stat) {
+  if (assistFlowActive) return;
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  if (!game.log) game.log = [];
+
+  const entry = { jersey, stat, time: new Date().toISOString(), id: Date.now() + Math.random() };
+  game.log.push(entry);
+
+  if (stat === 'Goal') {
+    game.log.push({ jersey, stat: 'Shot', time: new Date().toISOString(), id: Date.now() + Math.random(), auto: true });
+    toast('#' + jersey + ': Goal + Shot recorded');
+    saveGame(gid, game);
+    renderLog();
+    renderJerseyGrid();
+    updateScoreboard();
+    showAssistPrompt(jersey);
+    return;
+  }
+
+  saveGame(gid, game);
+  toast('#' + jersey + ': ' + stat);
+  renderLog();
+  renderJerseyGrid();
+  updateScoreboard();
+  openStatModal(jersey);
+}
+
+// ─── ASSIST FLOW ───
+function showAssistPrompt(scorerJersey) {
+  assistFlowActive = true;
+  const prompt = document.getElementById('assistPrompt');
+  prompt.style.display = '';
+  prompt.innerHTML = `
+    <p>Was the goal assisted?</p>
+    <div class="assist-actions">
+      <button class="assist-yes" onclick="showAssistPicker(${scorerJersey})">Yes</button>
+      <button class="assist-no" onclick="finishAssist()">No</button>
+    </div>
+  `;
+}
+
+function showAssistPicker(scorerJersey) {
+  const roster = loadRoster().filter(p => p.number !== scorerJersey);
+  const sorted = [...roster].sort((a, b) => {
+    const ua = getUsageCount(a.number);
+    const ub = getUsageCount(b.number);
+    if (ub !== ua) return ub - ua;
+    return a.number - b.number;
+  });
+  const prompt = document.getElementById('assistPrompt');
+  prompt.innerHTML = `
+    <p>Who assisted? Tap their number:</p>
+    <div class="assist-number-grid">
+      ${sorted.map(p => `<button class="assist-number-btn" onclick="recordAssist(${p.number})">${p.number}</button>`).join('')}
+    </div>
+    <div class="assist-actions" style="margin-top:12px;">
+      <button class="assist-no" onclick="finishAssist()">Cancel</button>
+    </div>
+  `;
+}
+
+function recordAssist(assistJersey) {
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  game.log.push({ jersey: assistJersey, stat: 'Assist', time: new Date().toISOString(), id: Date.now() + Math.random() });
+  saveGame(gid, game);
+  toast('#' + assistJersey + ': Assist recorded');
+  finishAssist();
+}
+
+function finishAssist() {
+  assistFlowActive = false;
+  document.getElementById('assistPrompt').style.display = 'none';
+  openStatModal(activeJersey);
+}
+
+// ─── UNDO ───
+function undoStat(entryId) {
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  game.log = (game.log || []).filter(e => e.id !== entryId);
+  saveGame(gid, game);
+  renderLog();
+  renderJerseyGrid();
+  renderSummary();
+  updateScoreboard();
+  toast('Stat removed');
+}
+
+// ─── LOG ───
+function renderLog() {
+  const gid = currentGameId();
+  const list = document.getElementById('logList');
+  const empty = document.getElementById('logEmpty');
+  if (!gid) { list.innerHTML = ''; empty.style.display = ''; return; }
+  const game = getGame(gid);
+  const log = game ? (game.log || []) : [];
+  if (log.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  const reversed = [...log].reverse();
+  const isEnded = game && game.ended;
+  list.innerHTML = reversed.map(e => {
+    const t = new Date(e.time);
+    const timeStr = t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `<li class="log-item">
+      <span class="log-jersey">#${e.jersey}</span>
+      <div class="log-info">
+        <span class="log-stat">${e.stat}${e.auto ? ' (auto)' : ''}</span>
+        <div class="log-time">${timeStr}</div>
+      </div>
+      ${!isEnded ? `<button class="log-undo" onclick="undoStat(${e.id})">Undo</button>` : ''}
+    </li>`;
+  }).join('');
+}
+
+// ─── SUMMARY (current game) ───
+function renderSummary() {
+  const gid = currentGameId();
+  const wrap = document.getElementById('summaryTableWrap');
+  const empty = document.getElementById('summaryEmpty');
+  const table = document.getElementById('summaryTable');
+  if (!gid) { wrap.style.display = 'none'; empty.style.display = ''; return; }
+  const game = getGame(gid);
+  const log = game ? (game.log || []) : [];
+  if (log.length === 0) { wrap.style.display = 'none'; empty.style.display = ''; return; }
+
+  empty.style.display = 'none';
+  wrap.style.display = '';
+  table.innerHTML = buildStatTableHTML(log);
+}
+
+// ─── TOTALS (all games) ───
+function setTotalsMode(mode) {
+  totalsMode = mode;
+  document.querySelectorAll('#totalsToggle button').forEach(b => {
+    b.classList.toggle('active', (mode === 'all' && b.textContent.trim() === 'All Games') ||
+                                  (mode === 'per-game' && b.textContent.trim() === 'Per Game'));
+  });
+  renderTotals();
+}
+
+function renderTotals() {
+  const wrap = document.getElementById('totalsTableWrap');
+  const empty = document.getElementById('totalsEmpty');
+  const table = document.getElementById('totalsTable');
+  const games = loadGames();
+  const roster = loadRoster();
+  const gameIds = Object.keys(games);
+
+  // Aggregate all logs across all games
+  let allLogs = [];
+  let gameCount = 0;
+  gameIds.forEach(id => {
+    const g = games[id];
+    if (g.log && g.log.length > 0) {
+      gameCount++;
+      allLogs = allLogs.concat(g.log);
+    }
+  });
+
+  if (allLogs.length === 0) { wrap.style.display = 'none'; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  wrap.style.display = '';
+
+  // All jerseys sorted numerically
+  const jerseys = [...new Set(allLogs.map(e => e.jersey))].sort((a, b) => a - b);
+  const statsUsed = STATS_ORDER.filter(s => allLogs.some(e => e.stat === s));
+  const isPerGame = totalsMode === 'per-game' && gameCount > 0;
+
+  let html = '<thead><tr><th>#</th>';
+  statsUsed.forEach(s => html += `<th title="${s}${isPerGame ? ' (per game)' : ''}">${STAT_ABBR[s] || s}</th>`);
+  html += '<th>Total</th>';
+  html += '<th>GP</th>';
+  html += '</tr></thead><tbody>';
+
+  const totals = {};
+  statsUsed.forEach(s => totals[s] = 0);
+  let grandTotal = 0;
+
+  jerseys.forEach(j => {
+    const playerLog = allLogs.filter(e => e.jersey === j);
+    const player = roster.find(p => p.number === j);
+    // Count games this player appeared in
+    const playerGames = new Set();
+    gameIds.forEach(id => {
+      const g = games[id];
+      if (g.log && g.log.some(e => e.jersey === j)) playerGames.add(id);
+    });
+    const pg = playerGames.size || 1;
+    let rowTotal = 0;
+    html += `<tr><td>${j}${player && player.goalie ? ' (G)' : ''}</td>`;
+    statsUsed.forEach(s => {
+      const c = playerLog.filter(e => e.stat === s).length;
+      totals[s] += c;
+      rowTotal += c;
+      if (isPerGame) {
+        html += `<td>${c > 0 ? (c / pg).toFixed(1) : '-'}</td>`;
+      } else {
+        html += `<td>${c || '-'}</td>`;
+      }
+    });
+    grandTotal += rowTotal;
+    if (isPerGame) {
+      html += `<td><strong>${(rowTotal / pg).toFixed(1)}</strong></td>`;
+    } else {
+      html += `<td><strong>${rowTotal}</strong></td>`;
+    }
+    html += `<td>${pg}</td></tr>`;
+  });
+
+  html += `<tr style="font-weight:700;background:#EDE9FE"><td>Total</td>`;
+  statsUsed.forEach(s => {
+    if (isPerGame && gameCount > 0) {
+      html += `<td>${(totals[s] / gameCount).toFixed(1)}</td>`;
+    } else {
+      html += `<td>${totals[s]}</td>`;
+    }
+  });
+  if (isPerGame && gameCount > 0) {
+    html += `<td>${(grandTotal / gameCount).toFixed(1)}</td>`;
+  } else {
+    html += `<td>${grandTotal}</td>`;
+  }
+  html += `<td>${gameCount}</td></tr>`;
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+// ─── NEW GAME ───
+function promptNewGame() {
+  document.getElementById('newGameName').value = '';
+  document.getElementById('newGameOpponent').value = '';
+  document.getElementById('newGameOverlay').classList.add('open');
+  document.getElementById('newGameName').focus();
+}
+function closeNewGameModal(e) {
+  if (e && e.target !== document.getElementById('newGameOverlay')) return;
+  closeNewGameModalDirect();
+}
+function closeNewGameModalDirect() {
+  document.getElementById('newGameOverlay').classList.remove('open');
+}
+
+function createNewGame() {
+  const name = document.getElementById('newGameName').value.trim();
+  const opponent = document.getElementById('newGameOpponent').value.trim();
+  if (!name) { toast('Enter a game name'); return; }
+  const id = 'game_' + Date.now();
+  const game = {
+    name: name,
+    opponent: opponent || '',
+    created: new Date().toISOString(),
+    log: [],
+    ended: false,
+    oppScore: null
+  };
+  saveGame(id, game);
+  setCurrentGame(id);
+  updateGameBar(game);
+  closeNewGameModalDirect();
+  renderJerseyGrid();
+  renderLog();
+  renderSummary();
+  renderGamesList();
+  updateScoreboard();
+  showView('players');
+  toast('Game started' + (opponent ? ' vs. ' + opponent : ''));
+}
+
+// ─── END GAME ───
+// ─── SHARED: Build stat table HTML from a log array ───
+function buildStatTableHTML(log) {
+  const roster = loadRoster();
+  const jerseys = [...new Set(log.map(e => e.jersey))].sort((a, b) => a - b);
+  const statsUsed = STATS_ORDER.filter(s => log.some(e => e.stat === s));
+  if (jerseys.length === 0 || statsUsed.length === 0) return '';
+
+  let html = '<thead><tr><th>#</th>';
+  statsUsed.forEach(s => html += `<th title="${s}">${STAT_ABBR[s] || s}</th>`);
+  html += '<th>Total</th></tr></thead><tbody>';
+
+  const totals = {};
+  statsUsed.forEach(s => totals[s] = 0);
+  let grandTotal = 0;
+
+  jerseys.forEach(j => {
+    const playerLog = log.filter(e => e.jersey === j);
+    const player = roster.find(p => p.number === j);
+    let rowTotal = 0;
+    html += `<tr><td>${j}${player && player.goalie ? ' (G)' : ''}</td>`;
+    statsUsed.forEach(s => {
+      const c = playerLog.filter(e => e.stat === s).length;
+      totals[s] += c;
+      rowTotal += c;
+      html += `<td>${c || '-'}</td>`;
+    });
+    grandTotal += rowTotal;
+    html += `<td><strong>${rowTotal}</strong></td></tr>`;
+  });
+
+  html += `<tr style="font-weight:700;background:#EDE9FE"><td>Total</td>`;
+  statsUsed.forEach(s => html += `<td>${totals[s]}</td>`);
+  html += `<td>${grandTotal}</td></tr>`;
+  html += '</tbody>';
+  return html;
+}
+
+// ─── END GAME ───
+function endGame() {
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  if (!game) return;
+  const log = game.log || [];
+  const ourGoals = log.filter(e => e.stat === 'Goal').length;
+  const goalAllowed = log.filter(e => e.stat === 'Goal Allowed').length;
+  const totalStats = log.length;
+  const oppName = game.opponent || 'Opponent';
+
+  // Populate score
+  document.getElementById('endGameOurScore').textContent = ourGoals;
+  document.getElementById('endGameOppPreview').textContent = goalAllowed;
+  document.getElementById('endGameOppLabel').textContent = oppName.toUpperCase().substring(0, 10);
+  document.getElementById('endGameMeta').textContent = game.name + ' · ' + totalStats + ' stats recorded';
+  document.getElementById('endGameOppScore').value = goalAllowed;
+
+  // Build stat table
+  document.getElementById('endGameStatsTable').innerHTML = buildStatTableHTML(log);
+
+  // Show full-page
+  document.getElementById('endGamePage').classList.add('open');
+
+  // Live update preview
+  document.getElementById('endGameOppScore').oninput = function() {
+    const v = this.value.trim();
+    document.getElementById('endGameOppPreview').textContent = v === '' ? '0' : v;
+  };
+}
+
+function closeEndGamePage() {
+  document.getElementById('endGamePage').classList.remove('open');
+}
+
+function confirmEndGame() {
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  const oppScoreVal = document.getElementById('endGameOppScore').value.trim();
+  game.ended = true;
+  game.endedAt = new Date().toISOString();
+  game.oppScore = oppScoreVal !== '' ? parseInt(oppScoreVal) : null;
+  game.ourScore = (game.log || []).filter(e => e.stat === 'Goal').length;
+  saveGame(gid, game);
+  closeEndGamePage();
+  updateGameBar(game);
+  updateScoreboard();
+  updateEndGameBtn();
+  renderLog();
+  renderGamesList();
+  toast('Game saved!');
+}
+
+// ─── RECALL / LOAD GAME ───
+function loadGame(id) {
+  const game = getGame(id);
+  if (!game) return;
+  setCurrentGame(id);
+  updateGameBar(game);
+  renderJerseyGrid();
+  renderLog();
+  renderSummary();
+  updateScoreboard();
+  updateEndGameBtn();
+  showView('players');
+  toast('Loaded: ' + game.name);
+}
+
+function deleteGame(id) {
+  const game = getGame(id);
+  showConfirm('Delete Game?', 'Delete "' + (game ? game.name : '') + '" and all its stats?', () => {
+    const g = loadGames();
+    delete g[id];
+    saveGames(g);
+    if (currentGameId() === id) {
+      localStorage.removeItem(LS_CURRENT);
+      document.getElementById('gameNameDisplay').textContent = 'No game loaded';
+      document.getElementById('gameOpponentDisplay').textContent = '';
+      renderJerseyGrid();
+      renderLog();
+      renderSummary();
+      updateScoreboard();
+      updateEndGameBtn();
+    }
+    renderGamesList();
+    toast('Game deleted');
+  });
+}
+
+function renderGamesList() {
+  const games = loadGames();
+  const ids = Object.keys(games).sort((a, b) => {
+    return new Date(games[b].created) - new Date(games[a].created);
+  });
+  const list = document.getElementById('gamesList');
+  const empty = document.getElementById('gamesEmpty');
+  if (ids.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  const cid = currentGameId();
+  list.innerHTML = ids.map(id => {
+    const g = games[id];
+    const d = new Date(g.created);
+    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    const logCount = (g.log || []).length;
+    const isCurrent = id === cid;
+    const oppLabel = g.opponent ? 'vs. ' + g.opponent : '';
+    // Score line
+    let scoreLine = '';
+    if (g.ended && g.ourScore != null) {
+      const oppS = g.oppScore != null ? g.oppScore : '?';
+      scoreLine = `Final: ${g.ourScore} – ${oppS}`;
+    } else if (g.log && g.log.length > 0) {
+      const ourG = g.log.filter(e => e.stat === 'Goal').length;
+      const theirG = g.log.filter(e => e.stat === 'Goal Allowed').length;
+      scoreLine = `Score: ${ourG} – ${theirG}`;
+    }
+    const statusBadge = g.ended ? ' (Final)' : '';
+    return `<li class="game-list-item" style="${isCurrent ? 'border-left: 4px solid var(--primary);' : ''}">
+      <div>
+        <div class="game-label">${g.name}${statusBadge}${isCurrent ? ' ●' : ''}</div>
+        <div class="game-date">${dateStr} ${oppLabel ? '· ' + oppLabel : ''} · ${logCount} stat${logCount !== 1 ? 's' : ''}</div>
+        ${scoreLine ? `<div class="game-score-line">${scoreLine}</div>` : ''}
+      </div>
+      <div class="game-list-actions">
+        ${!isCurrent ? `<button class="game-load-btn" onclick="loadGame('${id}')">Load</button>` : ''}
+        <button class="game-delete-btn" onclick="deleteGame('${id}')">Delete</button>
+      </div>
+    </li>`;
+  }).join('');
+}
+
+// ─── MANAGE ROSTER ───
+function renderManage() {
+  const roster = loadRoster();
+  const div = document.getElementById('manageList');
+  if (roster.length === 0) {
+    div.innerHTML = '<div class="empty-state"><p>No players on roster yet.</p></div>';
+    return;
+  }
+  const sorted = [...roster].sort((a, b) => a.number - b.number);
+  div.innerHTML = sorted.map(p => `
+    <div class="player-manage-item">
+      <div>
+        <span class="pm-number">#${p.number}</span>
+        ${p.goalie ? '<span class="pm-goalie">GOALIE</span>' : ''}
+      </div>
+      <div class="pm-actions">
+        <button class="pm-toggle-goalie" onclick="toggleGoalie(${p.number})">
+          ${p.goalie ? 'Remove Goalie' : 'Set Goalie'}
+        </button>
+        <button class="pm-remove" onclick="removePlayer(${p.number})">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleGoalie(num) {
+  const roster = loadRoster();
+  const p = roster.find(r => r.number === num);
+  if (p) p.goalie = !p.goalie;
+  saveRoster(roster);
+  renderManage();
+  renderJerseyGrid();
+  toast('#' + num + (p.goalie ? ' set as Goalie' : ' no longer Goalie'));
+}
+
+function removePlayer(num) {
+  showConfirm('Remove Player?', 'Remove #' + num + ' from the roster?', () => {
+    let roster = loadRoster();
+    roster = roster.filter(p => p.number !== num);
+    saveRoster(roster);
+    renderManage();
+    renderJerseyGrid();
+    toast('#' + num + ' removed');
+  });
+}
+
+// ─── CONFIRM ───
+let confirmCallback = null;
+function showConfirm(title, msg, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmOk').onclick = () => { closeConfirm(); if (confirmCallback) confirmCallback(); };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  confirmCallback = null;
+}
+
+// ─── TOAST ───
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ─── KEYBOARD SHORTCUTS ───
+document.getElementById('jerseyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addPlayer();
+});
+document.getElementById('newGameName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('newGameOpponent').focus();
+});
+document.getElementById('newGameOpponent').addEventListener('keydown', e => {
+  if (e.key === 'Enter') createNewGame();
+});
+
+// ─── START ───
+init();
+</script>
+</body>
+</html>
