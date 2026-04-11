@@ -153,15 +153,37 @@
   }
   .jersey-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 12px;
     margin-bottom: 24px;
+  }
+  .jersey-grid.small {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+  }
+  .jersey-grid.large {
+    grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+    gap: 14px;
+  }
+  .roster-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-light);
+  }
+  .roster-controls select {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
   }
   .jersey-btn {
     aspect-ratio: 1;
     border: 2px solid var(--primary-light);
     background: var(--card);
-    border-radius: 14px;
+    border-radius: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -170,19 +192,38 @@
     transition: all 0.15s;
     box-shadow: var(--shadow);
     position: relative;
+    min-height: 96px;
+    padding: 0 8px;
   }
   .jersey-btn:active { transform: scale(0.93); }
   .jersey-btn .number {
-    font-size: 26px;
+    font-size: 34px;
     font-weight: 800;
     color: var(--primary);
     line-height: 1;
   }
-  .jersey-btn .count {
-    font-size: 11px;
-    color: var(--text-light);
+  .jersey-btn.small .number { font-size: 28px; }
+  .jersey-btn.large .number { font-size: 38px; }
+  .jersey-btn .name {
+    font-size: 12px;
+    color: var(--text);
     margin-top: 2px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+  .jersey-btn.small .name { font-size: 11px; }
+  .jersey-btn.large .name { font-size: 14px; }
+  .jersey-btn .count {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 4px;
+  }
+  .jersey-btn.small .count { font-size: 11px; }
+  .jersey-btn.large .count { font-size: 14px; }
   .jersey-btn.goalie {
     border-color: var(--accent);
   }
@@ -297,19 +338,21 @@
   /* ── Stat Buttons ── */
   .stat-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
   .stat-btn {
-    padding: 16px 12px;
+    padding: 22px 16px;
     border: 2px solid var(--border);
     background: var(--card);
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.15s;
     text-align: center;
+    min-height: 88px;
+    line-height: 1.2;
   }
   .stat-btn:active { transform: scale(0.95); }
   .stat-btn:hover { border-color: var(--primary-light); background: #F5F3FF; }
@@ -465,6 +508,7 @@
     cursor: pointer;
   }
   .game-load-btn { background: var(--primary); color: white; }
+  .game-export-btn { background: var(--accent); color: white; }
   .game-delete-btn { background: #FEE2E2; color: var(--danger); }
 
   /* ── Tabs ── */
@@ -575,6 +619,12 @@
     font-weight: 800;
     color: var(--primary);
     min-width: 44px;
+  }
+  .player-manage-item .pm-name {
+    font-size: 14px;
+    color: var(--text);
+    margin-left: 8px;
+    font-weight: 600;
   }
   .player-manage-item .pm-goalie {
     font-size: 11px;
@@ -787,7 +837,9 @@
   </div>
   <div class="game-bar-actions">
     <button onclick="promptNewGame()">New Game</button>
+    <button id="changeGoalieBtn" style="display:none;" onclick="changeGoalie()">Change Goalie</button>
     <button class="end-game-btn" id="endGameBtn" style="display:none;" onclick="endGame()">End Game</button>
+    <button id="exportGameBtn" style="display:none;" onclick="exportGameStats()">Export Stats</button>
   </div>
 </div>
 
@@ -812,11 +864,20 @@
   <div class="section-label">Add Player</div>
   <div class="add-player-row">
     <input type="number" id="jerseyInput" placeholder="Jersey #" min="0" max="99" inputmode="numeric">
+    <input type="text" id="nameInput" placeholder="Name (optional)">
     <button class="goalie-toggle" id="goalieToggle" onclick="toggleGoalieInput()">G</button>
     <button class="add-btn" onclick="addPlayer()">Add</button>
   </div>
 
   <div class="section-label">Roster <span id="rosterCount"></span></div>
+  <div class="roster-controls">
+    <label>Button Size:</label>
+    <select id="buttonSizeSelect" onchange="changeButtonSize()">
+      <option value="small">Small</option>
+      <option value="medium">Medium</option>
+      <option value="large" selected>Large</option>
+    </select>
+  </div>
   <div class="jersey-grid" id="jerseyGrid"></div>
 
   <div class="empty-state" id="emptyRoster" style="display:none;">
@@ -909,9 +970,42 @@
       <input type="text" id="newGameName" placeholder='e.g. "Playoffs Round 1"'>
       <label>Opponent</label>
       <input type="text" id="newGameOpponent" placeholder='e.g. "Eagles"'>
+      <label>Periods</label>
+      <select id="newGamePeriods">
+        <option value="halves">Halves</option>
+        <option value="quarters">Quarters</option>
+      </select>
+      <label>Time per Period (minutes)</label>
+      <input type="number" id="newGamePeriodTime" placeholder="15" min="1" max="60" value="15">
+      <label>Starting Goalie</label>
+      <select id="newGameStartingGoalie"></select>
       <div class="form-actions">
         <button class="form-cancel" onclick="closeNewGameModalDirect()">Cancel</button>
         <button class="form-submit" onclick="createNewGame()">Start Game</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CHANGE GOALIE MODAL ═══ -->
+<div class="overlay" id="changeGoalieOverlay" onclick="closeChangeGoalieModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Change Goalie</h2>
+      <button class="modal-close" onclick="closeChangeGoalieModalDirect()">&times;</button>
+    </div>
+    <div class="new-game-form">
+      <label>Time on Clock (MM:SS)</label>
+      <input type="text" id="changeGoalieTime" placeholder="15:00" pattern="[0-9]{1,2}:[0-9]{2}">
+      <label>Quarter</label>
+      <select id="changeGoalieQuarter">
+        <!-- Options populated by JS -->
+      </select>
+      <label>New Goalie</label>
+      <select id="changeGoalieSelect"></select>
+      <div class="form-actions">
+        <button class="form-cancel" onclick="closeChangeGoalieModalDirect()">Cancel</button>
+        <button class="form-submit" onclick="confirmChangeGoalie()">Change</button>
       </div>
     </div>
   </div>
@@ -946,6 +1040,12 @@
       <input type="number" id="endGameOppScore" placeholder="0" min="0" inputmode="numeric">
     </div>
 
+    <!-- Overtime input -->
+    <div class="end-game-opp-input">
+      <label>Overtime (minutes, 0 if none):</label>
+      <input type="number" id="endGameOvertime" placeholder="0" min="0" inputmode="numeric">
+    </div>
+
     <!-- Full stat table -->
     <div class="end-game-stats-label">Game Stats</div>
     <div class="summary-table-wrap">
@@ -956,6 +1056,7 @@
     <div class="end-game-actions">
       <button class="form-cancel" onclick="closeEndGamePage()">Keep Playing</button>
       <button class="form-submit" onclick="confirmEndGame()">Save &amp; End Game</button>
+      <button class="form-submit" onclick="exportGameStats()">Export Stats</button>
     </div>
   </div>
 </div>
@@ -1083,15 +1184,30 @@ function updateGameBar(game) {
 function updateEndGameBtn() {
   const gid = currentGameId();
   const btn = document.getElementById('endGameBtn');
+  const cgb = document.getElementById('changeGoalieBtn');
+  const expb = document.getElementById('exportGameBtn');
   if (gid) {
     const game = getGame(gid);
     if (game && !game.ended) {
       btn.style.display = '';
+      expb.style.display = 'none';
+      // Show change goalie if there are goalies
+      const roster = loadRoster();
+      const hasGoalies = roster.some(p => p.goalie);
+      cgb.style.display = hasGoalies ? '' : 'none';
+    } else if (game && game.ended) {
+      btn.style.display = 'none';
+      cgb.style.display = 'none';
+      expb.style.display = '';
     } else {
       btn.style.display = 'none';
+      cgb.style.display = 'none';
+      expb.style.display = 'none';
     }
   } else {
     btn.style.display = 'none';
+    cgb.style.display = 'none';
+    expb.style.display = 'none';
   }
 }
 
@@ -1149,26 +1265,36 @@ function showView(name) {
 // ─── PLAYERS ───
 function addPlayer() {
   const input = document.getElementById('jerseyInput');
+  const nameInput = document.getElementById('nameInput');
   const num = input.value.trim();
   if (num === '' || isNaN(num)) return;
   const jersey = parseInt(num);
+  const name = nameInput.value.trim();
   const roster = loadRoster();
   if (roster.find(p => p.number === jersey)) {
     toast('Player #' + jersey + ' already exists');
     return;
   }
   const isGoalie = document.getElementById('goalieToggle').classList.contains('active');
-  roster.push({ number: jersey, goalie: isGoalie });
+  roster.push({ number: jersey, name: name, goalie: isGoalie });
   saveRoster(roster);
   input.value = '';
+  nameInput.value = '';
   document.getElementById('goalieToggle').classList.remove('active');
   renderJerseyGrid();
   renderManage();
-  toast('Added #' + jersey + (isGoalie ? ' (Goalie)' : ''));
+  toast('Added #' + jersey + (name ? ' (' + name + ')' : '') + (isGoalie ? ' (Goalie)' : ''));
 }
 
-function toggleGoalieInput() {
-  document.getElementById('goalieToggle').classList.toggle('active');
+function changeButtonSize() {
+  const size = document.getElementById('buttonSizeSelect').value;
+  const grid = document.getElementById('jerseyGrid');
+  grid.className = 'jersey-grid ' + size;
+  // Also set on buttons
+  const buttons = grid.querySelectorAll('.jersey-btn');
+  buttons.forEach(btn => {
+    btn.className = btn.className.replace(/\bsmall|medium|large\b/g, '') + ' ' + size;
+  });
 }
 
 function getUsageCount(jersey) {
@@ -1196,15 +1322,22 @@ function renderJerseyGrid() {
   const sorted = [...roster].sort((a, b) => {
     const ua = getUsageCount(a.number);
     const ub = getUsageCount(b.number);
-    if (ub !== ua) return ub - ua;
-    return a.number - b.number;
+    const hasA = ua > 0;
+    const hasB = ub > 0;
+    if (hasA !== hasB) return hasB - hasA; // with stats first
+    if (hasA && hasB) return ub - ua; // both with stats, higher usage first
+    return a.number - b.number; // both without, by number
   });
+
+  const size = document.getElementById('buttonSizeSelect').value;
+  grid.className = 'jersey-grid ' + size;
 
   grid.innerHTML = sorted.map(p => {
     const count = getUsageCount(p.number);
-    return `<button class="jersey-btn${p.goalie ? ' goalie' : ''}" onclick="openStatModal(${p.number})">
+    return `<button class="jersey-btn${p.goalie ? ' goalie' : ''} ${size}" onclick="openStatModal(${p.number})">
       ${p.goalie ? '<span class="goalie-badge">G</span>' : ''}
       <span class="number">${p.number}</span>
+      <span class="name">${p.name || ''}</span>
       <span class="count">${count ? count + ' stat' + (count > 1 ? 's' : '') : ''}</span>
     </button>`;
   }).join('');
@@ -1397,7 +1530,7 @@ function renderSummary() {
 
   empty.style.display = 'none';
   wrap.style.display = '';
-  table.innerHTML = buildStatTableHTML(log);
+  table.innerHTML = buildStatTableHTML(log, game);
 }
 
 // ─── TOTALS (all games) ───
@@ -1501,6 +1634,23 @@ function renderTotals() {
 function promptNewGame() {
   document.getElementById('newGameName').value = '';
   document.getElementById('newGameOpponent').value = '';
+  document.getElementById('newGamePeriods').value = 'quarters';
+  document.getElementById('newGamePeriodTime').value = '15';
+  const goalieSelect = document.getElementById('newGameStartingGoalie');
+  goalieSelect.innerHTML = '';
+  const roster = loadRoster();
+  roster.filter(p => p.goalie).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.number;
+    opt.textContent = '#' + p.number;
+    goalieSelect.appendChild(opt);
+  });
+  if (roster.filter(p => p.goalie).length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No goalies added';
+    goalieSelect.appendChild(opt);
+  }
   document.getElementById('newGameOverlay').classList.add('open');
   document.getElementById('newGameName').focus();
 }
@@ -1515,11 +1665,21 @@ function closeNewGameModalDirect() {
 function createNewGame() {
   const name = document.getElementById('newGameName').value.trim();
   const opponent = document.getElementById('newGameOpponent').value.trim();
+  const periods = document.getElementById('newGamePeriods').value;
+  const periodTime = parseInt(document.getElementById('newGamePeriodTime').value) || 15;
+  const startingGoalie = document.getElementById('newGameStartingGoalie').value;
   if (!name) { toast('Enter a game name'); return; }
+  if (!startingGoalie) { toast('Select a starting goalie'); return; }
   const id = 'game_' + Date.now();
   const game = {
     name: name,
     opponent: opponent || '',
+    periods: periods,
+    periodTime: periodTime,
+    startingGoalie: parseInt(startingGoalie),
+    currentGoalie: parseInt(startingGoalie),
+    goalieChanges: [],
+    overtime: 0,
     created: new Date().toISOString(),
     log: [],
     ended: false,
@@ -1538,21 +1698,91 @@ function createNewGame() {
   toast('Game started' + (opponent ? ' vs. ' + opponent : ''));
 }
 
+function changeGoalie() {
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  if (!game || game.ended) return;
+  document.getElementById('changeGoalieTime').value = '';
+  const quarterSelect = document.getElementById('changeGoalieQuarter');
+  quarterSelect.innerHTML = '';
+  const numQuarters = game.periods === 'halves' ? 2 : 4;
+  for (let i = 1; i <= numQuarters; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    let label = i;
+    if (numQuarters === 2) {
+      label += i === 1 ? 'st Half' : 'nd Half';
+    } else {
+      label += (i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th') + ' Quarter';
+    }
+    opt.textContent = label;
+    quarterSelect.appendChild(opt);
+  }
+  quarterSelect.value = '1';
+  const goalieSelect = document.getElementById('changeGoalieSelect');
+  goalieSelect.innerHTML = '';
+  const roster = loadRoster();
+  roster.filter(p => p.goalie).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.number;
+    opt.textContent = '#' + p.number;
+    goalieSelect.appendChild(opt);
+  });
+  document.getElementById('changeGoalieOverlay').classList.add('open');
+  document.getElementById('changeGoalieTime').focus();
+}
+
+function closeChangeGoalieModal(e) {
+  if (e && e.target !== document.getElementById('changeGoalieOverlay')) return;
+  closeChangeGoalieModalDirect();
+}
+
+function closeChangeGoalieModalDirect() {
+  document.getElementById('changeGoalieOverlay').classList.remove('open');
+}
+
+function confirmChangeGoalie() {
+  const gid = currentGameId();
+  if (!gid) return;
+  const game = getGame(gid);
+  const time = document.getElementById('changeGoalieTime').value.trim();
+  const quarter = parseInt(document.getElementById('changeGoalieQuarter').value);
+  const newGoalie = parseInt(document.getElementById('changeGoalieSelect').value);
+  if (!time.match(/^\d{1,2}:\d{2}$/)) { toast('Enter time as MM:SS'); return; }
+  if (!newGoalie) { toast('Select a goalie'); return; }
+  if (newGoalie === game.currentGoalie) { toast('Already the current goalie'); return; }
+  game.goalieChanges.push({
+    time: time,
+    quarter: quarter,
+    newGoalie: newGoalie
+  });
+  game.currentGoalie = newGoalie;
+  saveGame(gid, game);
+  closeChangeGoalieModalDirect();
+  toast('Goalie changed to #' + newGoalie);
+}
+
 // ─── END GAME ───
 // ─── SHARED: Build stat table HTML from a log array ───
-function buildStatTableHTML(log) {
+function buildStatTableHTML(log, game) {
   const roster = loadRoster();
   const jerseys = [...new Set(log.map(e => e.jersey))].sort((a, b) => a - b);
   const statsUsed = STATS_ORDER.filter(s => log.some(e => e.stat === s));
   if (jerseys.length === 0 || statsUsed.length === 0) return '';
 
+  const goalieTimes = game ? calculateGoalieTimes(game) : {};
+  const showMin = Object.keys(goalieTimes).length > 0;
+
   let html = '<thead><tr><th>#</th>';
   statsUsed.forEach(s => html += `<th title="${s}">${STAT_ABBR[s] || s}</th>`);
+  if (showMin) html += '<th>Min</th>';
   html += '<th>Total</th></tr></thead><tbody>';
 
   const totals = {};
   statsUsed.forEach(s => totals[s] = 0);
   let grandTotal = 0;
+  let totalMinutes = 0;
 
   jerseys.forEach(j => {
     const playerLog = log.filter(e => e.jersey === j);
@@ -1565,12 +1795,18 @@ function buildStatTableHTML(log) {
       rowTotal += c;
       html += `<td>${c || '-'}</td>`;
     });
+    const minValue = showMin && player && player.goalie ? (goalieTimes[j] || 0) : '';
+    if (showMin) {
+      html += `<td>${minValue !== '' ? minValue : '-'}</td>`;
+      if (minValue !== '') totalMinutes += minValue;
+    }
     grandTotal += rowTotal;
     html += `<td><strong>${rowTotal}</strong></td></tr>`;
   });
 
   html += `<tr style="font-weight:700;background:#EDE9FE"><td>Total</td>`;
   statsUsed.forEach(s => html += `<td>${totals[s]}</td>`);
+  if (showMin) html += `<td>${totalMinutes || 0}</td>`;
   html += `<td>${grandTotal}</td></tr>`;
   html += '</tbody>';
   return html;
@@ -1594,9 +1830,10 @@ function endGame() {
   document.getElementById('endGameOppLabel').textContent = oppName.toUpperCase().substring(0, 10);
   document.getElementById('endGameMeta').textContent = game.name + ' · ' + totalStats + ' stats recorded';
   document.getElementById('endGameOppScore').value = goalAllowed;
+  document.getElementById('endGameOvertime').value = game.overtime || 0;
 
   // Build stat table
-  document.getElementById('endGameStatsTable').innerHTML = buildStatTableHTML(log);
+  document.getElementById('endGameStatsTable').innerHTML = buildStatTableHTML(log, game);
 
   // Show full-page
   document.getElementById('endGamePage').classList.add('open');
@@ -1617,10 +1854,12 @@ function confirmEndGame() {
   if (!gid) return;
   const game = getGame(gid);
   const oppScoreVal = document.getElementById('endGameOppScore').value.trim();
+  const overtimeVal = document.getElementById('endGameOvertime').value.trim();
   game.ended = true;
   game.endedAt = new Date().toISOString();
   game.oppScore = oppScoreVal !== '' ? parseInt(oppScoreVal) : null;
   game.ourScore = (game.log || []).filter(e => e.stat === 'Goal').length;
+  game.overtime = overtimeVal !== '' ? parseInt(overtimeVal) : 0;
   saveGame(gid, game);
   closeEndGamePage();
   updateGameBar(game);
@@ -1629,6 +1868,115 @@ function confirmEndGame() {
   renderLog();
   renderGamesList();
   toast('Game saved!');
+}
+
+function exportGameStats(gameId) {
+  const gid = gameId || currentGameId();
+  if (!gid) { toast('No game loaded'); return; }
+  const game = getGame(gid);
+  if (!game) { toast('Game not found'); return; }
+  const log = game.log || [];
+  if (log.length === 0) { toast('No stats to export'); return; }
+
+  // Group stats by jersey
+  const statsByJersey = {};
+  log.forEach(e => {
+    if (!statsByJersey[e.jersey]) statsByJersey[e.jersey] = {};
+    statsByJersey[e.jersey][e.stat] = (statsByJersey[e.jersey][e.stat] || 0) + 1;
+  });
+
+  // Headers
+  const headers = "Jersey|Goals|Assists|ShotsOnGoal|GroundBalls|Takeaways|FaceoffAttempts|FaceoffWon|Saves|GoalsAgainst";
+  const lines = [headers];
+
+  // Sort jerseys numerically
+  Object.keys(statsByJersey).sort((a, b) => parseInt(a) - parseInt(b)).forEach(jersey => {
+    const s = statsByJersey[jersey];
+    // Check if has any stats
+    const hasStats = Object.values(s).some(v => v > 0);
+    if (hasStats) {
+      const line = [
+        jersey,
+        s['Goal'] || 0,
+        s['Assist'] || 0,
+        s['Shot'] || 0,
+        s['Ground Ball'] || 0,
+        s['Caused Turnover'] || 0,
+        s['Draw Attempt'] || 0,
+        s['Draw Control'] || 0,
+        s['Goal Save'] || 0,
+        s['Goal Allowed'] || 0
+      ].join('|');
+      lines.push(line);
+    }
+  });
+
+  if (lines.length === 1) { toast('No players with stats to export'); return; }
+
+  const text = lines.join('\n');
+
+  // Filename: yyyymmdd + opponent
+  const dateStr = game.endedAt ? game.endedAt.slice(0, 10).replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const opp = game.opponent || 'Opponent';
+  const filename = dateStr + opp + '.txt';
+
+  // Download
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  toast('Stats exported!');
+}
+
+function calculateGoalieTimes(game) {
+  const times = {};
+  const periodTime = game.periodTime || 15;
+  const totalPeriods = game.periods === 'halves' ? 2 : 4;
+  const totalTimeSeconds = totalPeriods * periodTime * 60 + (game.overtime || 0) * 60;
+
+  function timeToSeconds(timeStr, quarter) {
+    const [mm, ss] = timeStr.split(':').map(Number);
+    const remainingSeconds = mm * 60 + ss;
+    const periodSeconds = periodTime * 60;
+    const playedInPeriod = periodSeconds - remainingSeconds;
+    const previousPeriodsSeconds = (quarter - 1) * periodSeconds;
+    return previousPeriodsSeconds + playedInPeriod;
+  }
+
+  const changes = game.goalieChanges || [];
+  // Sort changes by time
+  changes.sort((a, b) => {
+    if (a.quarter !== b.quarter) return a.quarter - b.quarter;
+    return timeToSeconds(a.time, a.quarter) - timeToSeconds(b.time, b.quarter);
+  });
+
+  let currentGoalie = game.startingGoalie;
+  let startSeconds = 0;
+
+  for (const change of changes) {
+    const endSeconds = timeToSeconds(change.time, change.quarter);
+    const duration = endSeconds - startSeconds;
+    if (!times[currentGoalie]) times[currentGoalie] = 0;
+    times[currentGoalie] += duration;
+    currentGoalie = change.newGoalie;
+    startSeconds = endSeconds;
+  }
+
+  // Last stint to end
+  const duration = totalTimeSeconds - startSeconds;
+  if (!times[currentGoalie]) times[currentGoalie] = 0;
+  times[currentGoalie] += duration;
+
+  // Convert to minutes, round to 1 decimal
+  Object.keys(times).forEach(j => {
+    times[j] = Math.round(times[j] / 60 * 10) / 10;
+  });
+
+  return times;
 }
 
 // ─── RECALL / LOAD GAME ───
@@ -1703,6 +2051,7 @@ function renderGamesList() {
       </div>
       <div class="game-list-actions">
         ${!isCurrent ? `<button class="game-load-btn" onclick="loadGame('${id}')">Load</button>` : ''}
+        ${g.ended ? `<button class="game-export-btn" onclick="exportGameStats('${id}')">Export</button>` : ''}
         <button class="game-delete-btn" onclick="deleteGame('${id}')">Delete</button>
       </div>
     </li>`;
@@ -1722,9 +2071,11 @@ function renderManage() {
     <div class="player-manage-item">
       <div>
         <span class="pm-number">#${p.number}</span>
+        <span class="pm-name">${p.name || ''}</span>
         ${p.goalie ? '<span class="pm-goalie">GOALIE</span>' : ''}
       </div>
       <div class="pm-actions">
+        <button class="pm-edit-name" onclick="editPlayerName(${p.number})">Edit Name</button>
         <button class="pm-toggle-goalie" onclick="toggleGoalie(${p.number})">
           ${p.goalie ? 'Remove Goalie' : 'Set Goalie'}
         </button>
@@ -1744,15 +2095,18 @@ function toggleGoalie(num) {
   toast('#' + num + (p.goalie ? ' set as Goalie' : ' no longer Goalie'));
 }
 
-function removePlayer(num) {
-  showConfirm('Remove Player?', 'Remove #' + num + ' from the roster?', () => {
-    let roster = loadRoster();
-    roster = roster.filter(p => p.number !== num);
+function editPlayerName(num) {
+  const roster = loadRoster();
+  const p = roster.find(r => r.number === num);
+  if (!p) return;
+  const newName = prompt('Edit name for #' + num, p.name || '');
+  if (newName !== null) {
+    p.name = newName.trim();
     saveRoster(roster);
     renderManage();
     renderJerseyGrid();
-    toast('#' + num + ' removed');
-  });
+    toast('Name updated for #' + num);
+  }
 }
 
 // ─── CONFIRM ───
