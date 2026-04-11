@@ -861,15 +861,6 @@
 
 <!-- ═══ PLAYERS VIEW ═══ -->
 <div class="view active" id="viewPlayers">
-  <div class="section-label">Add Player</div>
-  <div class="add-player-row">
-    <input type="number" id="jerseyInput" placeholder="Jersey #" min="0" max="99" inputmode="numeric">
-    <input type="text" id="nameInput" placeholder="Name (optional)">
-    <button class="goalie-toggle" id="goalieToggle" onclick="toggleGoalieInput()">G</button>
-    <button class="add-btn" onclick="addPlayer()">Add</button>
-  </div>
-
-  <div class="section-label">Roster <span id="rosterCount"></span></div>
   <div class="roster-controls">
     <label>Button Size:</label>
     <select id="buttonSizeSelect" onchange="changeButtonSize()">
@@ -878,11 +869,24 @@
       <option value="large" selected>Large</option>
     </select>
   </div>
-  <div class="jersey-grid" id="jerseyGrid"></div>
+
+  <div class="section-label">Players with Stats</div>
+  <div class="jersey-grid" id="jerseyGridWithStats"></div>
+
+  <div class="section-label">Players without Stats</div>
+  <div class="jersey-grid" id="jerseyGridWithoutStats"></div>
 
   <div class="empty-state" id="emptyRoster" style="display:none;">
     <div class="empty-icon">🥍</div>
     <p>Add jersey numbers to start tracking stats.<br>Numbers will sort by game usage.</p>
+  </div>
+
+  <div class="section-label">Add Player</div>
+  <div class="add-player-row">
+    <input type="number" id="jerseyInput" placeholder="Jersey #" min="0" max="99" inputmode="numeric">
+    <input type="text" id="nameInput" placeholder="Name (optional)">
+    <button class="goalie-toggle" id="goalieToggle" onclick="toggleGoalieInput()">G</button>
+    <button class="add-btn" onclick="addPlayer()">Add</button>
   </div>
 </div>
 
@@ -1288,10 +1292,12 @@ function addPlayer() {
 
 function changeButtonSize() {
   const size = document.getElementById('buttonSizeSelect').value;
-  const grid = document.getElementById('jerseyGrid');
-  grid.className = 'jersey-grid ' + size;
+  const gridWith = document.getElementById('jerseyGridWithStats');
+  const gridWithout = document.getElementById('jerseyGridWithoutStats');
+  gridWith.className = 'jersey-grid ' + size;
+  gridWithout.className = 'jersey-grid ' + size;
   // Also set on buttons
-  const buttons = grid.querySelectorAll('.jersey-btn');
+  const buttons = document.querySelectorAll('.jersey-btn');
   buttons.forEach(btn => {
     btn.className = btn.className.replace(/\bsmall|medium|large\b/g, '') + ' ' + size;
   });
@@ -1307,32 +1313,38 @@ function getUsageCount(jersey) {
 
 function renderJerseyGrid() {
   const roster = loadRoster();
-  const grid = document.getElementById('jerseyGrid');
+  const gridWith = document.getElementById('jerseyGridWithStats');
+  const gridWithout = document.getElementById('jerseyGridWithoutStats');
   const empty = document.getElementById('emptyRoster');
-  const countEl = document.getElementById('rosterCount');
-  countEl.textContent = '(' + roster.length + ')';
 
   if (roster.length === 0) {
-    grid.innerHTML = '';
+    gridWith.innerHTML = '';
+    gridWithout.innerHTML = '';
     empty.style.display = '';
     return;
   }
   empty.style.display = 'none';
 
-  const sorted = [...roster].sort((a, b) => {
-    const ua = getUsageCount(a.number);
-    const ub = getUsageCount(b.number);
-    const hasA = ua > 0;
-    const hasB = ub > 0;
-    if (hasA !== hasB) return hasB - hasA; // with stats first
-    if (hasA && hasB) return ub - ua; // both with stats, higher usage first
-    return a.number - b.number; // both without, by number
+  const withStats = [];
+  const withoutStats = [];
+
+  roster.forEach(p => {
+    const count = getUsageCount(p.number);
+    if (count > 0) {
+      withStats.push(p);
+    } else {
+      withoutStats.push(p);
+    }
   });
 
-  const size = document.getElementById('buttonSizeSelect').value;
-  grid.className = 'jersey-grid ' + size;
+  withStats.sort((a, b) => a.number - b.number);
+  withoutStats.sort((a, b) => a.number - b.number);
 
-  grid.innerHTML = sorted.map(p => {
+  const size = document.getElementById('buttonSizeSelect').value;
+  gridWith.className = 'jersey-grid ' + size;
+  gridWithout.className = 'jersey-grid ' + size;
+
+  const renderPlayer = (p) => {
     const count = getUsageCount(p.number);
     return `<button class="jersey-btn${p.goalie ? ' goalie' : ''} ${size}" onclick="openStatModal(${p.number})">
       ${p.goalie ? '<span class="goalie-badge">G</span>' : ''}
@@ -1340,7 +1352,10 @@ function renderJerseyGrid() {
       <span class="name">${p.name || ''}</span>
       <span class="count">${count ? count + ' stat' + (count > 1 ? 's' : '') : ''}</span>
     </button>`;
-  }).join('');
+  };
+
+  gridWith.innerHTML = withStats.map(renderPlayer).join('');
+  gridWithout.innerHTML = withoutStats.map(renderPlayer).join('');
 }
 
 // ─── STAT MODAL ───
