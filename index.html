@@ -20,6 +20,102 @@
     --shadow: 0 2px 8px rgba(107,33,168,0.10);
   }
 
+  /* ── Theme: Grey ── */
+  body.theme-grey {
+    --primary: #6B7280;
+    --primary-light: #9CA3AF;
+    --primary-dark: #4B5563;
+    --accent: #6B7280;
+    --bg: #F9FAFB;
+    --card: #FFFFFF;
+    --text: #111827;
+    --text-light: #6B7280;
+    --border: #E5E7EB;
+    --shadow: 0 2px 8px rgba(107,114,128,0.10);
+  }
+  body.theme-grey header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    box-shadow: 0 2px 12px rgba(107,114,128,0.25);
+  }
+
+  /* ── Theme: Blue ── */
+  body.theme-blue {
+    --primary: #2563EB;
+    --primary-light: #3B82F6;
+    --primary-dark: #1D4ED8;
+    --accent: #F59E0B;
+    --bg: #EFF6FF;
+    --card: #FFFFFF;
+    --text: #1E3A8A;
+    --text-light: #64748B;
+    --border: #CBD5E1;
+    --shadow: 0 2px 8px rgba(37,99,235,0.10);
+  }
+  body.theme-blue header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    box-shadow: 0 2px 12px rgba(37,99,235,0.25);
+  }
+
+  /* ── Theme: Dark ── */
+  body.theme-dark {
+    --primary: #8B5CF6;
+    --primary-light: #A78BFA;
+    --primary-dark: #7C3AED;
+    --accent: #F59E0B;
+    --bg: #1F2937;
+    --card: #374151;
+    --text: #F9FAFB;
+    --text-light: #D1D5DB;
+    --border: #4B5563;
+    --shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  body.theme-dark header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    box-shadow: 0 2px 12px rgba(139,92,246,0.25);
+  }
+  body.theme-dark .empty-state p {
+    color: var(--text-light);
+  }
+  body.theme-dark .section-label {
+    color: var(--primary);
+  }
+  body.theme-dark .game-bar {
+    background: var(--card);
+    border-color: var(--border);
+  }
+  body.theme-dark .tab-bar {
+    background: var(--card);
+    border-color: var(--border);
+  }
+  body.theme-dark .modal {
+    background: var(--card);
+  }
+  body.theme-dark .confirm-box {
+    background: var(--card);
+  }
+  body.theme-dark .toast {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  /* ── Theme: Green ── */
+  body.theme-green {
+    --primary: #059669;
+    --primary-light: #10B981;
+    --primary-dark: #047857;
+    --accent: #F59E0B;
+    --bg: #ECFDF5;
+    --card: #FFFFFF;
+    --text: #064E3B;
+    --text-light: #6B7280;
+    --border: #D1FAE5;
+    --shadow: 0 2px 8px rgba(5,150,105,0.10);
+  }
+  body.theme-green header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    box-shadow: 0 2px 12px rgba(5,150,105,0.25);
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   body {
@@ -45,6 +141,44 @@
   }
   header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
   .header-actions { display: flex; gap: 8px; }
+  .theme-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 4px;
+    position: relative;
+  }
+  .theme-selector::after {
+    content: '▼';
+    font-size: 8px;
+    color: white;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .theme-selector select {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    min-width: 90px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  .theme-selector select:focus {
+    outline: none;
+    background: rgba(255,255,255,0.1);
+  }
+  .theme-selector select option {
+    background: var(--card);
+    color: var(--text);
+  }
   .header-btn {
     background: rgba(255,255,255,0.2);
     border: none;
@@ -881,6 +1015,15 @@
 <header>
   <h1>Lacrosse Stats</h1>
   <div class="header-actions">
+    <div class="theme-selector">
+      <select id="themeSelect" onchange="setTheme(this.value)">
+        <option value="default">💜 Purple</option>
+        <option value="blue">💙 Blue</option>
+        <option value="grey">🤍 Grey</option>
+        <option value="dark">🖤 Dark</option>
+        <option value="green">💚 Green</option>
+      </select>
+    </div>
     <button class="header-btn" onclick="showView('games')">Games</button>
   </div>
 </header>
@@ -1192,6 +1335,7 @@ const LS_SEASONS = 'lax_seasons';
 const LS_CURRENT = 'lax_current_game';
 const LS_CURRENT_TEAM = 'lax_current_team';
 const LS_CURRENT_SEASON = 'lax_current_season';
+const LS_THEME = 'lax_theme';
 
 function loadRoster(teamId) {
   const team = teamId || currentTeamId();
@@ -1372,7 +1516,27 @@ function promptNewSeason() {
   toast('Season added');
 }
 
+function setTheme(theme) {
+  document.body.className = theme === 'default' ? '' : 'theme-' + theme;
+  localStorage.setItem(LS_THEME, theme);
+  const themeNames = {
+    'default': 'Purple',
+    'blue': 'Blue',
+    'grey': 'Grey',
+    'dark': 'Dark',
+    'green': 'Green'
+  };
+  toast('Theme changed to ' + themeNames[theme]);
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem(LS_THEME) || 'default';
+  document.getElementById('themeSelect').value = savedTheme;
+  setTheme(savedTheme);
+}
+
 function init() {
+  initTheme();
   ensureDefaultTeamAndSeason();
   migrateLegacyGames();
   renderTeamSeasonSelectors();
