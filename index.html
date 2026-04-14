@@ -60,6 +60,45 @@
   .header-btn.danger { background: rgba(239,68,68,0.4); }
   .header-btn.danger:hover { background: rgba(239,68,68,0.6); }
 
+  .team-season-bar {
+    background: rgba(255,255,255,0.15);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .team-season-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: white;
+  }
+  .team-season-group label {
+    white-space: nowrap;
+    opacity: 0.85;
+  }
+  .team-season-group select {
+    min-width: 140px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .team-season-group button {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    background: rgba(255,255,255,0.18);
+    color: white;
+  }
+
   /* ── Game Info Bar ── */
   .game-bar {
     background: var(--card);
@@ -511,6 +550,23 @@
   .game-export-btn { background: var(--accent); color: white; }
   .game-delete-btn { background: #FEE2E2; color: var(--danger); }
 
+  /* ── Season Sections ── */
+  .season-section {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+  }
+  .season-section .section-label {
+    color: var(--primary);
+    margin-bottom: 12px;
+  }
+  .season-section .game-list {
+    list-style: none;
+    margin: 0;
+  }
+
   /* ── Tabs ── */
   .tab-bar {
     position: fixed;
@@ -829,6 +885,19 @@
   </div>
 </header>
 
+<div class="team-season-bar">
+  <div class="team-season-group">
+    <label for="teamSelect">Team</label>
+    <select id="teamSelect" onchange="selectTeam(this.value)"></select>
+    <button onclick="promptNewTeam()">+ Team</button>
+  </div>
+  <div class="team-season-group">
+    <label for="seasonSelect">Season</label>
+    <select id="seasonSelect" onchange="selectSeason(this.value)"></select>
+    <button onclick="promptNewSeason()">+ Season</button>
+  </div>
+</div>
+
 <!-- Game Bar -->
 <div class="game-bar" id="gameBar">
   <div class="game-bar-info">
@@ -914,7 +983,7 @@
 
 <!-- ═══ TOTALS VIEW ═══ -->
 <div class="view" id="viewTotals">
-  <div class="section-label">All-Time Player Stats</div>
+  <div class="section-label" id="totalsHeader">All-Time Player Stats</div>
   <div class="totals-toggle" id="totalsToggle">
     <button class="active" onclick="setTotalsMode('all')">All Games</button>
     <button onclick="setTotalsMode('per-game')">Per Game</button>
@@ -1118,19 +1187,59 @@ const STAT_ABBR = {
 
 const LS_ROSTER = 'lax_roster';
 const LS_GAMES = 'lax_games';
+const LS_TEAMS = 'lax_teams';
+const LS_SEASONS = 'lax_seasons';
 const LS_CURRENT = 'lax_current_game';
+const LS_CURRENT_TEAM = 'lax_current_team';
+const LS_CURRENT_SEASON = 'lax_current_season';
 
-function loadRoster() {
-  return JSON.parse(localStorage.getItem(LS_ROSTER) || '[]');
+function loadRoster(teamId) {
+  const team = teamId || currentTeamId();
+  if (!team) return [];
+  return JSON.parse(localStorage.getItem(LS_ROSTER + '_' + team) || '[]');
 }
-function saveRoster(r) {
-  localStorage.setItem(LS_ROSTER, JSON.stringify(r));
+function saveRoster(r, teamId) {
+  const team = teamId || currentTeamId();
+  if (!team) return;
+  localStorage.setItem(LS_ROSTER + '_' + team, JSON.stringify(r));
 }
 function loadGames() {
   return JSON.parse(localStorage.getItem(LS_GAMES) || '{}');
 }
 function saveGames(g) {
   localStorage.setItem(LS_GAMES, JSON.stringify(g));
+}
+function loadTeams() {
+  return JSON.parse(localStorage.getItem(LS_TEAMS) || '{}');
+}
+function saveTeams(t) {
+  localStorage.setItem(LS_TEAMS, JSON.stringify(t));
+}
+function loadSeasons() {
+  return JSON.parse(localStorage.getItem(LS_SEASONS) || '{}');
+}
+function saveSeasons(s) {
+  localStorage.setItem(LS_SEASONS, JSON.stringify(s));
+}
+function currentTeamId() {
+  return localStorage.getItem(LS_CURRENT_TEAM) || null;
+}
+function currentSeasonId() {
+  return localStorage.getItem(LS_CURRENT_SEASON) || null;
+}
+function setCurrentTeam(id) {
+  localStorage.setItem(LS_CURRENT_TEAM, id);
+}
+function setCurrentSeason(id) {
+  localStorage.setItem(LS_CURRENT_SEASON, id);
+}
+function getTeam(id) {
+  const t = loadTeams();
+  return t[id] || null;
+}
+function getSeason(id) {
+  const s = loadSeasons();
+  return s[id] || null;
 }
 function currentGameId() {
   return localStorage.getItem(LS_CURRENT) || null;
@@ -1154,7 +1263,119 @@ let assistFlowActive = false;
 let totalsMode = 'all';
 
 // ─── INIT ───
+function ensureDefaultTeamAndSeason() {
+  let teams = loadTeams();
+  let seasons = loadSeasons();
+  if (Object.keys(teams).length === 0) {
+    const id = 'team_' + Date.now();
+    teams[id] = { id, name: 'Default Team', createdAt: new Date().toISOString() };
+    saveTeams(teams);
+  }
+  if (Object.keys(seasons).length === 0) {
+    const id = 'season_' + Date.now();
+    seasons[id] = { id, name: 'Default Season', createdAt: new Date().toISOString() };
+    saveSeasons(seasons);
+  }
+  teams = loadTeams();
+  seasons = loadSeasons();
+  if (!currentTeamId() || !teams[currentTeamId()]) {
+    setCurrentTeam(Object.keys(teams)[0]);
+  }
+  if (!currentSeasonId() || !seasons[currentSeasonId()]) {
+    setCurrentSeason(Object.keys(seasons)[0]);
+  }
+}
+
+function migrateLegacyGames() {
+  const games = loadGames();
+  const teamId = currentTeamId();
+  const seasonId = currentSeasonId();
+  let changed = false;
+  Object.values(games).forEach(game => {
+    if (!game.teamId) {
+      game.teamId = teamId;
+      changed = true;
+    }
+    if (!game.seasonId) {
+      game.seasonId = seasonId;
+      changed = true;
+    }
+  });
+  if (changed) saveGames(games);
+}
+
+function renderTeamSeasonSelectors() {
+  const teamSelect = document.getElementById('teamSelect');
+  const seasonSelect = document.getElementById('seasonSelect');
+  const teams = loadTeams();
+  const seasons = loadSeasons();
+  const activeTeam = currentTeamId();
+  const activeSeason = currentSeasonId();
+
+  teamSelect.innerHTML = Object.values(teams).map(team =>
+    `<option value="${team.id}">${team.name}</option>`
+  ).join('');
+  seasonSelect.innerHTML = Object.values(seasons).map(season =>
+    `<option value="${season.id}">${season.name}</option>`
+  ).join('');
+
+  if (activeTeam) teamSelect.value = activeTeam;
+  if (activeSeason) seasonSelect.value = activeSeason;
+}
+
+function selectTeam(id) {
+  if (!id) return;
+  setCurrentTeam(id);
+  renderTeamSeasonSelectors();
+  renderJerseyGrid();
+  renderTotals();
+  renderGamesList();
+  renderManage();
+  toast('Team selected');
+}
+
+function selectSeason(id) {
+  if (!id) return;
+  setCurrentSeason(id);
+  renderTeamSeasonSelectors();
+  renderTotals();
+  renderGamesList();
+  toast('Season selected');
+}
+
+function promptNewTeam() {
+  const name = prompt('Enter a new team name');
+  if (!name) return;
+  const teams = loadTeams();
+  const id = 'team_' + Date.now();
+  teams[id] = { id, name: name.trim(), createdAt: new Date().toISOString() };
+  saveTeams(teams);
+  setCurrentTeam(id);
+  renderTeamSeasonSelectors();
+  renderJerseyGrid();
+  renderTotals();
+  renderGamesList();
+  renderManage();
+  toast('Team added');
+}
+
+function promptNewSeason() {
+  const name = prompt('Enter a new season name');
+  if (!name) return;
+  const seasons = loadSeasons();
+  const id = 'season_' + Date.now();
+  seasons[id] = { id, name: name.trim(), createdAt: new Date().toISOString() };
+  saveSeasons(seasons);
+  setCurrentSeason(id);
+  renderTeamSeasonSelectors();
+  renderGamesList();
+  toast('Season added');
+}
+
 function init() {
+  ensureDefaultTeamAndSeason();
+  migrateLegacyGames();
+  renderTeamSeasonSelectors();
   const gid = currentGameId();
   if (gid) {
     const game = getGame(gid);
@@ -1562,11 +1783,26 @@ function renderTotals() {
   const wrap = document.getElementById('totalsTableWrap');
   const empty = document.getElementById('totalsEmpty');
   const table = document.getElementById('totalsTable');
+  const header = document.getElementById('totalsHeader');
   const games = loadGames();
   const roster = loadRoster();
-  const gameIds = Object.keys(games);
+  const teamId = currentTeamId();
+  const seasonId = currentSeasonId();
 
-  // Aggregate all logs across all games
+  // Update header with context
+  const team = getTeam(teamId);
+  const season = getSeason(seasonId);
+  const teamName = team ? team.name : 'All Teams';
+  const seasonName = season ? season.name : 'All Seasons';
+  header.textContent = `Player Stats: ${teamName} - ${seasonName}`;
+
+  // Filter games by current team and season
+  const gameIds = Object.keys(games).filter(id => {
+    const g = games[id];
+    return (!teamId || g.teamId === teamId) && (!seasonId || g.seasonId === seasonId);
+  });
+
+  // Aggregate all logs across filtered games
   let allLogs = [];
   let gameCount = 0;
   gameIds.forEach(id => {
@@ -1599,7 +1835,7 @@ function renderTotals() {
   jerseys.forEach(j => {
     const playerLog = allLogs.filter(e => e.jersey === j);
     const player = roster.find(p => p.number === j);
-    // Count games this player appeared in
+    // Count games this player appeared in (from filtered games)
     const playerGames = new Set();
     gameIds.forEach(id => {
       const g = games[id];
@@ -1687,6 +1923,7 @@ function createNewGame() {
   if (!startingGoalie) { toast('Select a starting goalie'); return; }
   const id = 'game_' + Date.now();
   const game = {
+    id,
     name: name,
     opponent: opponent || '',
     periods: periods,
@@ -1696,9 +1933,13 @@ function createNewGame() {
     goalieChanges: [],
     overtime: 0,
     created: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    teamId: currentTeamId(),
+    seasonId: currentSeasonId(),
     log: [],
     ended: false,
-    oppScore: null
+    oppScore: null,
+    ourScore: null
   };
   saveGame(id, game);
   setCurrentGame(id);
@@ -2032,45 +2273,75 @@ function deleteGame(id) {
 
 function renderGamesList() {
   const games = loadGames();
-  const ids = Object.keys(games).sort((a, b) => {
-    return new Date(games[b].created) - new Date(games[a].created);
-  });
+  const seasons = loadSeasons();
+  const teamId = currentTeamId();
+  const seasonId = currentSeasonId();
+  const ids = Object.keys(games)
+    .filter(id => {
+      const g = games[id];
+      return (!teamId || g.teamId === teamId) && (!seasonId || g.seasonId === seasonId);
+    })
+    .sort((a, b) => {
+      return new Date(games[b].created) - new Date(games[a].created);
+    });
+
   const list = document.getElementById('gamesList');
   const empty = document.getElementById('gamesEmpty');
   if (ids.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
   empty.style.display = 'none';
   const cid = currentGameId();
-  list.innerHTML = ids.map(id => {
+
+  // Group games by season
+  const gamesBySeason = {};
+  ids.forEach(id => {
     const g = games[id];
-    const d = new Date(g.created);
-    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-    const logCount = (g.log || []).length;
-    const isCurrent = id === cid;
-    const oppLabel = g.opponent ? 'vs. ' + g.opponent : '';
-    // Score line
-    let scoreLine = '';
-    if (g.ended && g.ourScore != null) {
-      const oppS = g.oppScore != null ? g.oppScore : '?';
-      scoreLine = `Final: ${g.ourScore} – ${oppS}`;
-    } else if (g.log && g.log.length > 0) {
-      const ourG = g.log.filter(e => e.stat === 'Goal').length;
-      const theirG = g.log.filter(e => e.stat === 'Goal Allowed').length;
-      scoreLine = `Score: ${ourG} – ${theirG}`;
-    }
-    const statusBadge = g.ended ? ' (Final)' : '';
-    return `<li class="game-list-item" style="${isCurrent ? 'border-left: 4px solid var(--primary);' : ''}">
-      <div>
-        <div class="game-label">${g.name}${statusBadge}${isCurrent ? ' ●' : ''}</div>
-        <div class="game-date">${dateStr} ${oppLabel ? '· ' + oppLabel : ''} · ${logCount} stat${logCount !== 1 ? 's' : ''}</div>
-        ${scoreLine ? `<div class="game-score-line">${scoreLine}</div>` : ''}
-      </div>
-      <div class="game-list-actions">
-        ${!isCurrent ? `<button class="game-load-btn" onclick="loadGame('${id}')">Load</button>` : ''}
-        ${g.ended ? `<button class="game-export-btn" onclick="exportGameStats('${id}')">Export</button>` : ''}
-        <button class="game-delete-btn" onclick="deleteGame('${id}')">Delete</button>
-      </div>
-    </li>`;
-  }).join('');
+    const seasonName = seasons[g.seasonId] ? seasons[g.seasonId].name : 'Unknown Season';
+    if (!gamesBySeason[seasonName]) gamesBySeason[seasonName] = [];
+    gamesBySeason[seasonName].push(id);
+  });
+
+  let html = '';
+  Object.keys(gamesBySeason).sort().reverse().forEach(seasonName => {
+    html += `<div class="season-section" style="margin-bottom: 20px;">
+      <div class="section-label" style="margin-bottom: 12px; font-weight: 700;">${seasonName}</div>
+      <ul class="game-list">`;
+
+    gamesBySeason[seasonName].forEach(id => {
+      const g = games[id];
+      const d = new Date(g.created);
+      const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+      const logCount = (g.log || []).length;
+      const isCurrent = id === cid;
+      const oppLabel = g.opponent ? 'vs. ' + g.opponent : '';
+      // Score line
+      let scoreLine = '';
+      if (g.ended && g.ourScore != null) {
+        const oppS = g.oppScore != null ? g.oppScore : '?';
+        scoreLine = `Final: ${g.ourScore} – ${oppS}`;
+      } else if (g.log && g.log.length > 0) {
+        const ourG = g.log.filter(e => e.stat === 'Goal').length;
+        const theirG = g.log.filter(e => e.stat === 'Goal Allowed').length;
+        scoreLine = `Score: ${ourG} – ${theirG}`;
+      }
+      const statusBadge = g.ended ? ' (Final)' : '';
+      html += `<li class="game-list-item" style="${isCurrent ? 'border-left: 4px solid var(--primary);' : ''}">
+        <div>
+          <div class="game-label">${g.name}${statusBadge}${isCurrent ? ' ●' : ''}</div>
+          <div class="game-date">${dateStr} ${oppLabel ? '· ' + oppLabel : ''} · ${logCount} stat${logCount !== 1 ? 's' : ''}</div>
+          ${scoreLine ? `<div class="game-score-line">${scoreLine}</div>` : ''}
+        </div>
+        <div class="game-list-actions">
+          ${!isCurrent ? `<button class="game-load-btn" onclick="loadGame('${id}')">Load</button>` : ''}
+          ${g.ended ? `<button class="game-export-btn" onclick="exportGameStats('${id}')">Export</button>` : ''}
+          <button class="game-delete-btn" onclick="deleteGame('${id}')">Delete</button>
+        </div>
+      </li>`;
+    });
+
+    html += '</ul></div>';
+  });
+
+  list.innerHTML = html;
 }
 
 // ─── MANAGE ROSTER ───
